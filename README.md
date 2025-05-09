@@ -1,0 +1,78 @@
+# Accelerating Multicomponent Phase-Coexistence Calculations with Physics-informed Neural Networks
+
+<br />
+<img src="./website/overview_v3.png" />
+<br />
+
+## Install Instructions
+
+Please install using the `setup.py`.
+
+```console
+$ git clone https://github.com/webbtheosim/ml-ternary-phase.git
+$ cd ml-ternary-phase
+$ conda create --name phase python=3.8.16
+$ conda activate phase
+$ # or source activate phase
+$ pip install -e .
+```
+
+## Download Data and Results
+Select a disk location for data storage and update the directory paths before running the program. Download the required data from Zenodo [here](https://doi.org/10.5281/zenodo.13776946).
+- **DATA_DIR**: Stores data pickle files (approx. 400 MB).
+
+```python
+# LOAD DATA
+DATA_DIR = "your/custom/dir/"
+
+filename = os.path.join(DATA_DIR, f"data_clean.pickle")
+with open(filename, "rb") as handle:
+    (x, y_c, y_r, phase_idx, num_phase, max_phase) = pickle.load(handle)
+```
+- **x**: Input <b>x</b> = (&chi;<sub>AB</sub>, &chi;<sub>BC</sub>, &chi;<sub>AC</sub>, v<sub>A</sub>, v<sub>B</sub>, v<sub>C</sub>, &phi;<sub>A</sub>, &phi;<sub>B</sub>) &isin; ℝ<sup>8</sup>.
+- **y_c**: Output one-hot encoded classification vector <b>y</b><sub>c</sub> &isin; ℝ<sup>3</sup>.
+- **y_r**: Output equilibrium composition and abundance vector y<sub>r</sub> = (&phi;<sub>A</sub><sup>&alpha;</sup>, &phi;<sub>B</sub><sup>&alpha;</sup>, &phi;<sub>A</sub><sup>&beta;</sup>, &phi;<sub>B</sub><sup>&beta;</sup>, &phi;<sub>A</sub><sup>&gamma;</sup>, &phi;<sub>B</sub><sup>&gamma;</sup>, w<sup>&alpha;</sup>, w<sup>&beta;</sup>, w<sup>&gamma;</sup>) &isin; ℝ<sup>9</sup>.
+- **phase_idx**: A single integer indicating which unique phase system it belongs to.
+- **num_phase**: A single integer indicates the number of equilibrium phases the input splits into.
+- **max_phase**: A single integer indicates the maximum number of equilibrium phases the system splits into.
+
+To train from scratch, only the **DATA_DIR** is required.
+
+Optional training results can be downloaded here.
+- **TRAIN_RESULT_DIR**: Stores training results in pickle format (approx. 5GB). These pickle files can be used to reproduce the post-ML optimization results. [Download](https://drive.google.com/drive/folders/1iqdNqNbAL3BVvuPYAEXuBHnIzhpdZBXY?usp=sharing)
+- **RESULT_DIR**: Stores results in pickle format for analysis and plotting (approx. 229 MB). These are temporary files. In the notebook, if `reload=False`, the plots will be generated using these files. [Download](https://drive.google.com/drive/folders/1Xb4_S81d7RkLqKOcsfptHBg7N1MeAw3c?usp=sharing)
+- **OPT_RESULT_DIR**: Stores post-ML Newton-CG optimization results in pickle format (approx. 78 MB) . Each file represents the optimization of a single phase system, identified by a unique index. [Download](https://drive.google.com/drive/folders/1NEoXrO5KQGeRFkotUxCbeOyI931yl8Nv?usp=drive_link)
+- **PICKLE_INNER_PATH**: Stores training results of hyperparameter tuning (approx. 16 MB). These small files contain hyperparameter tuning results. If you want to start with only the outer loop of cross-validation, you can directly use these files and run `run_outercv.py`. If you'd prefer to perform hyperparameter tuning yourself, run `run_innercv.py`. [Download](https://drive.google.com/drive/folders/15_BgWrhvIAhgwVHCXKdrBS_PlexB9x-z?usp=sharing)
+
+
+## File Structure
+
+### Notebooks
+The `notebook` folder contains Jupyter notebooks for reproducing figures and tables:
+- `result.ipynb`: Visualizes all result figures from the paper.
+- `optimization.ipynb`: Generates coexistence curves using ML predictions and post-ML Newton-CG optimization.
+
+### Machine Learning Core
+The `mlphase` folder contains the core ML code:
+- `run_innercv.py`: Performs hyperparameter tuning using 10% of the training data (inner loop of nested five-fold cross-validation).
+- `run_outercv.py`: Conducts production run training using the best hyperparameter combinations (outer loop of nested five-fold cross-validation).
+- `run_opt.py`: Executes post-ML Newton-CG optimization for coexistence curve predictions.
+- `analysis/`: Scripts for calculating and evaluating accuracy metrics of model predictions.
+- `data/`: Scripts for data splitting and loading.
+- `models/`: Defines architecture and implementation of various machine learning models.
+- `plot/`: Scripts for creating visual representations of data, including figures for analysis and publication.
+
+### Data Generation
+The `hull_creation` folder contains code for convex hull data generation.
+
+### Results
+- `result_pickle/`: Contains temporary files used for figure preparation.
+- `result_csv/`: Contains temporary files used for table creation.
+
+Note: To generate your own results, set `reload=True` in the notebooks.
+
+### Job Submission
+The `submit` folder contains job submission scripts for High-Performance Computing environments:
+- `innercv.submit`: Neural network hyperparameter tuning.
+- `outercv.submit`: Neural network production run training.
+- `post_opt.submit`: Post-ML optimization.
